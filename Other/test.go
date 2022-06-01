@@ -2,36 +2,33 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 )
 
 func main() {
-	// 登录接口
-	logInUri := "https://uaa-zxj-prod.cdcdn.cn:22668/backend/auth/oauth/token"
-	
-	formValues := url.Values{}
-	formValues.Set("test", "a")
-	formDataStr := formValues.Encode()
-	formDataBytes := []byte(formDataStr)
-	formBytesReader := bytes.NewReader(formDataBytes)
+	fmt.Print(getToken())
+}
 
-	req, err := http.NewRequest("POST", logInUri, formBytesReader)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+const (
+ Partake = "https://uaa-zxj-prod.cdcdn.cn:22668/backend/pm/mgr/project/partake"
+ TaskList = "https://uaa-zxj-prod.cdcdn.cn:22668/backend/pm/mgr/dailyReport/queryTaskList"
+)
+
+// 622959ede4b08db2022070ca
+func getToken() map[string]interface{} {
+	
+	req, err := http.NewRequest("GET", Partake, bytes.NewBuffer(nil))
+	req.Header.Set("Authorization", "Bearer 622959ede4b08db2022070ca")
 	if err != nil {
 		log.Print(err)
 	}
 
 	client := &http.Client{}
-	resp, _ := client.Do(req)
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(string(body))
-
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -39,4 +36,26 @@ func main() {
 		}
 	}(req.Body)
 
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Print(err)
+		return nil
+	}
+
+	return Transformation(resp)
 }
+
+
+// Transformation 转换接口返回结果 -> map
+func Transformation(response *http.Response) map[string]interface{} {
+	var result map[string]interface{}
+	body, err := ioutil.ReadAll(response.Body)
+	if err == nil {
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			return nil
+		}
+	}
+	return result
+}
+
