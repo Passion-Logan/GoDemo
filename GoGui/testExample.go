@@ -15,7 +15,6 @@ import (
 	. "github.com/lxn/walk/declarative"
 )
 
-
 func main() {
 	walk.AppendToWalkInit(func() {
 		walk.FocusEffect, _ = walk.NewBorderGlowEffect(walk.RGB(0, 63, 255))
